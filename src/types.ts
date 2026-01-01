@@ -3,6 +3,7 @@ export interface Annotation {
   selectedText: string;
   reply: string;
   timestamp: number;
+  highlightEl?: HTMLElement;
 }
 
 export interface ConversationAnnotations {

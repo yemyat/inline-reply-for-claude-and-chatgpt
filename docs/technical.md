@@ -34,6 +34,17 @@
 - Removed ES module type from background service worker manifest
 - Bundle size: ~26KB for content script (includes notyf)
 
+### Iteration #4 (2026-01-01)
+**Goal:** Code quality refactor with separation of concerns
+
+- Broke monolithic `content.ts` (450 lines) into 8 focused modules
+- Extracted state management to `state.ts` (pure functions, module-level state)
+- Created `ui/` directory for UI components (popover, toolbar, highlight)
+- Created `utils/` directory for DOM helpers and toast wrapper
+- Manager class now handles orchestration only
+- No new dependencies - bundle size unchanged (~26KB)
+- All modules bundled into single IIFE file by bun
+
 ---
 
 ## Project Structure
@@ -41,20 +52,30 @@
 ```
 ai-inline-reply/
 ├── src/
-│   ├── manifest.json    # Chrome extension manifest v3
-│   ├── content.ts       # Main content script (selection + UI)
+│   ├── content.ts       # Entry point (initializes manager)
+│   ├── manager.ts       # Orchestration layer (event handling, coordination)
+│   ├── state.ts         # Annotation state (CRUD functions)
+│   ├── types.ts         # TypeScript interfaces
+│   ├── ui/
+│   │   ├── popover.ts   # Reply popover component
+│   │   ├── toolbar.ts   # Bottom toolbar component
+│   │   └── highlight.ts # Text highlight logic
+│   ├── utils/
+│   │   ├── dom.ts       # DOM helpers (AI detection, textarea insertion)
+│   │   └── toast.ts     # Notyf wrapper
 │   ├── background.ts    # Service worker for storage
-│   ├── types.ts         # Shared TypeScript interfaces
+│   ├── manifest.json    # Chrome extension manifest v3
 │   └── styles.css       # UI styling (dark theme)
 ├── dist/                # Compiled extension (load this in Chrome)
-│   ├── content.js       # Bundled content script (IIFE)
+│   ├── content.js       # Bundled content script (IIFE, ~26KB)
 │   ├── background.js    # Bundled service worker
 │   ├── manifest.json
 │   ├── styles.css
 │   └── notyf.min.css    # Toast notification styles
 ├── docs/
 │   ├── idea.md          # Product spec
-│   └── technical.md     # This file
+│   ├── technical.md     # This file
+│   └── architecture.md  # Module flow diagrams
 ├── package.json
 └── tsconfig.json
 ```
