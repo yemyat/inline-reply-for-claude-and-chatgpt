@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Inline replies for ChatGPT and Claude",
   "scripts": {
-    "build": "tsc && cp src/manifest.json dist/ && cp src/styles.css dist/",
+    "build": "bun build src/content.ts --outdir dist --format iife --target browser && bun build src/background.ts --outdir dist --format iife --target browser && cp src/manifest.json dist/ && cp src/styles.css dist/ && cp node_modules/notyf/notyf.min.css dist/",
     "watch": "tsc --watch"
   },
   "devDependencies": {
@@ -17,5 +17,8 @@
     "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
       "bunx ultracite fix"
     ]
+  },
+  "dependencies": {
+    "notyf": "^3.10.0"
   }
 }

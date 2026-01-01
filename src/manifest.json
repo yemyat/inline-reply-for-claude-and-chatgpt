@@ -12,11 +12,10 @@
         "https://claude.ai/*"
       ],
       "js": ["content.js"],
-      "css": ["styles.css"]
+      "css": ["styles.css", "notyf.min.css"]
     }
   ],
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "service_worker": "background.js"
   }
 }

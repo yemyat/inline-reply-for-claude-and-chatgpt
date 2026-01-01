@@ -1,3 +1,5 @@
+import { Notyf } from "notyf";
+
 interface Annotation {
   id: string;
   selectedText: string;
@@ -12,8 +14,22 @@ class InlineReplyManager {
   private toolbar: HTMLElement | null = null;
   private currentRange: Range | null = null;
   private editingAnnotationId: string | null = null;
+  private notyf: Notyf;
+
+  private showToast(message: string, type: "success" | "error"): void {
+    if (type === "success") {
+      this.notyf.success(message);
+    } else {
+      this.notyf.error(message);
+    }
+  }
 
   constructor() {
+    this.notyf = new Notyf({
+      duration: 3000,
+      position: { x: "right", y: "top" },
+      dismissible: true,
+    });
     this.init();
   }
 
@@ -341,7 +357,7 @@ class InlineReplyManager {
 
   private compilePrompt(): void {
     if (this.annotations.length === 0) {
-      alert("No replies to compile. Select text and add replies first.");
+      this.showToast("No replies to compile. Select text and add replies first.", "error");
       return;
     }
 
@@ -362,7 +378,7 @@ class InlineReplyManager {
     } else {
       // Fallback to clipboard
       navigator.clipboard.writeText(prompt).then(() => {
-        alert("Prompt copied to clipboard! Paste it into the chat.");
+        this.showToast("Prompt copied to clipboard!", "success");
       });
       console.log("AI Inline Reply: Copied prompt to clipboard");
     }

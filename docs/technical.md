@@ -26,6 +26,14 @@
 - Highlights persist until cleared or page refresh
 - Fixed ProseMirror newline handling (each line needs separate `<p>` tag)
 
+### Iteration #3 (2026-01-01)
+**Goal:** Better notifications with bun bundling
+
+- Replaced `tsc` with `bun build` for bundling (IIFE format for content scripts)
+- Added notyf for toast notifications (replaces `alert()`)
+- Removed ES module type from background service worker manifest
+- Bundle size: ~26KB for content script (includes notyf)
+
 ---
 
 ## Project Structure
@@ -39,6 +47,11 @@ ai-inline-reply/
 │   ├── types.ts         # Shared TypeScript interfaces
 │   └── styles.css       # UI styling (dark theme)
 ├── dist/                # Compiled extension (load this in Chrome)
+│   ├── content.js       # Bundled content script (IIFE)
+│   ├── background.js    # Bundled service worker
+│   ├── manifest.json
+│   ├── styles.css
+│   └── notyf.min.css    # Toast notification styles
 ├── docs/
 │   ├── idea.md          # Product spec
 │   └── technical.md     # This file
@@ -49,8 +62,8 @@ ai-inline-reply/
 ## Build & Install
 
 ```bash
-npm install
-npm run build
+bun install
+bun run build
 ```
 
 Then in Chrome:
@@ -98,20 +111,13 @@ Example DOM path for AI response text:
 
 Chrome content scripts run as plain scripts, NOT ES modules. If TypeScript outputs `export {}` at the end of a file, the content script will fail to load silently.
 
-**Fix:** Don't use `import` statements in content scripts. Define types inline or use a bundler that outputs IIFE format.
+**Fix:** Use a bundler that outputs IIFE format. We use `bun build`:
 
-```typescript
-// BAD - causes "export {}" in output
-import type { Annotation } from './types';
-
-// GOOD - inline the interface
-interface Annotation {
-  id: string;
-  selectedText: string;
-  reply: string;
-  timestamp: number;
-}
+```bash
+bun build src/content.ts --outdir dist --format iife --target browser
 ```
+
+This bundles all dependencies (like notyf) and outputs a single IIFE file that works in content scripts. You can now use normal `import` statements in your source code.
 
 ### Selection API
 
@@ -196,4 +202,5 @@ input.dispatchEvent(new Event('input', { bubbles: true }));
 - [x] Delete annotations
 - [x] Auto-insert prompt into textarea
 - [x] Proper newline formatting in Claude's ProseMirror input
+- [x] Toast notifications via notyf (replaces alert())
 
