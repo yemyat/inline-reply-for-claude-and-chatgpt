@@ -7,7 +7,15 @@
     "watch": "tsc --watch"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.10",
     "@types/chrome": "^0.0.260",
-    "typescript": "^5.3.3"
+    "lint-staged": "^16.2.7",
+    "typescript": "^5.3.3",
+    "ultracite": "^7.0.3"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,jsonc,css,scss,md,mdx}": [
+      "bunx ultracite fix"
+    ]
   }
 }
