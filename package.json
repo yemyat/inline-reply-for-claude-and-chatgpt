@@ -1,0 +1,13 @@
+{
+  "name": "ai-inline-reply",
+  "version": "0.1.0",
+  "description": "Inline replies for ChatGPT and Claude",
+  "scripts": {
+    "build": "tsc && cp src/manifest.json dist/ && cp src/styles.css dist/",
+    "watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.260",
+    "typescript": "^5.3.3"
+  }
+}

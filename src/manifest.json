@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "AI Inline Reply",
+  "version": "0.1.0",
+  "description": "Add inline replies to ChatGPT and Claude responses",
+  "permissions": ["storage", "activeTab"],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://chatgpt.com/*",
+        "https://claude.ai/*"
+      ],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
+}
