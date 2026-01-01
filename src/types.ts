@@ -4,6 +4,8 @@ export interface Annotation {
   reply: string;
   timestamp: number;
   highlightEl?: HTMLElement;
+  prefixContext?: string;
+  suffixContext?: string;
 }
 
 export interface ConversationAnnotations {

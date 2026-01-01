@@ -45,6 +45,32 @@
 - No new dependencies - bundle size unchanged (~26KB)
 - All modules bundled into single IIFE file by bun
 
+### Iteration #6 (2026-01-01)
+**Goal:** Improve compiled prompt clarity with surrounding context
+
+**Problem:** When the same phrase appears multiple times in an AI response, the compiled prompt didn't make it clear which occurrence was being referenced.
+
+**Solution:**
+- Capture surrounding context (up to 6 words before/after) at annotation creation time
+- Stop at sentence boundaries (`.`, `?`, `!`) for natural context
+- Add sequential IDs to link highlights with comments
+- Include format explanation in prompt header for AI understanding
+
+**New prompt format:**
+```
+I have feedback on your response. [highlight: ...] marks the quoted text, [Comment #N] is my feedback on it.
+
+[1] ...uses a greedy approach to [highlight: find the optimal solution] in polynomial time....
+[Comment #1]: Can you explain why greedy works here?
+
+Please address each point above.
+```
+
+**Files changed:**
+- `src/types.ts` - Added `prefixContext` and `suffixContext` fields to Annotation
+- `src/utils/context.ts` - New file for context extraction from Range
+- `src/manager.ts` - Capture context before highlight, updated prompt format
+
 ### Iteration #5 (2026-01-01)
 **Goal:** Visual polish with Linear-inspired design and better UX
 
@@ -90,6 +116,7 @@ ai-inline-reply/
 │   │   ├── toolbar.ts   # Bottom toolbar component
 │   │   └── highlight.ts # Text highlight logic
 │   ├── utils/
+│   │   ├── context.ts   # Surrounding text extraction from Range
 │   │   ├── dom.ts       # DOM helpers (AI detection, textarea insertion)
 │   │   └── toast.ts     # Notyf wrapper
 │   ├── background.ts    # Service worker for storage
@@ -253,4 +280,5 @@ input.dispatchEvent(new Event('input', { bubbles: true }));
 - [x] Auto-insert prompt into textarea
 - [x] Proper newline formatting in Claude's ProseMirror input
 - [x] Toast notifications via notyf (replaces alert())
+- [x] Surrounding context in compiled prompts (6 words before/after)
 

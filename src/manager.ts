@@ -18,6 +18,7 @@ import {
   showPopover,
 } from "./ui/popover";
 import { createToolbar, updateToolbar } from "./ui/toolbar";
+import { extractSurroundingContext } from "./utils/context";
 import { insertIntoTextarea, isWithinAIResponse } from "./utils/dom";
 import { showToast } from "./utils/toast";
 
@@ -99,12 +100,19 @@ export class InlineReplyManager {
       return;
     }
 
+    // Extract context BEFORE creating highlight (which modifies the DOM)
+    const context = this.currentRange
+      ? extractSurroundingContext(this.currentRange)
+      : { prefix: "", suffix: "" };
+
     // Creating new annotation
     const annotation: Annotation = {
       id: crypto.randomUUID(),
       selectedText,
       reply,
       timestamp: Date.now(),
+      prefixContext: context.prefix,
+      suffixContext: context.suffix,
     };
 
     // Create highlight element
@@ -181,11 +189,16 @@ export class InlineReplyManager {
       return;
     }
 
-    let prompt = "I have specific feedback on your response:\n\n";
+    let prompt =
+      "I have feedback on your response. [highlight: ...] marks the quoted text, [Comment #N] is my feedback on it.\n\n";
 
     for (const [index, ann] of annotations.entries()) {
-      prompt += `${index + 1}. Regarding: "${ann.selectedText}"\n`;
-      prompt += `   My reply: ${ann.reply}\n\n`;
+      const id = index + 1;
+      const prefix = ann.prefixContext ? `...${ann.prefixContext} ` : "";
+      const suffix = ann.suffixContext ? ` ${ann.suffixContext}...` : "";
+
+      prompt += `[${id}] ${prefix}[highlight: ${ann.selectedText}]${suffix}\n`;
+      prompt += `[Comment #${id}]: ${ann.reply}\n\n`;
     }
 
     prompt += "Please address each point above.";
