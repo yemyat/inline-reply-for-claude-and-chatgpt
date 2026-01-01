@@ -45,6 +45,35 @@
 - No new dependencies - bundle size unchanged (~26KB)
 - All modules bundled into single IIFE file by bun
 
+### Iteration #5 (2026-01-01)
+**Goal:** Visual polish with Linear-inspired design and better UX
+
+**Micro-copy improvements:**
+- "Compile Prompt" → "Insert" (clearer action, less jargon)
+- "Save Reply" → "Save" (shorter, Linear-style)
+- "0 replies" → "No comments" / "1 comment" / "2 comments"
+- "Add your reply..." → "What should change?" (invites specific feedback)
+- Added dynamic titles: "Add feedback" vs "Edit feedback"
+
+**Visual design:**
+- Linear-inspired color palette (purple-blue accent #5e6ad2)
+- CSS custom properties for design tokens
+- Layered shadows with subtle border rings
+- Three-tier background system (primary → secondary → tertiary)
+- Inline SVG icons for all buttons
+- Focus ring states for accessibility
+- Smooth 150ms transitions
+
+**New popover features:**
+- Header with title and close button (X icon)
+- Preview section showing selected text (truncated to 60 chars)
+- Context-aware title updates
+
+**Toolbar improvements:**
+- Comment icon with count
+- Divider between count and actions
+- Ghost and primary button variants
+
 ---
 
 ## Project Structure
