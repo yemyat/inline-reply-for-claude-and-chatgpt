@@ -3,12 +3,15 @@ interface Annotation {
   selectedText: string;
   reply: string;
   timestamp: number;
+  highlightEl?: HTMLElement;
 }
 
 class InlineReplyManager {
   private annotations: Annotation[] = [];
   private popover: HTMLElement | null = null;
   private toolbar: HTMLElement | null = null;
+  private currentRange: Range | null = null;
+  private editingAnnotationId: string | null = null;
 
   constructor() {
     this.init();
@@ -27,6 +30,7 @@ class InlineReplyManager {
     this.popover.innerHTML = `
       <textarea id="air-reply-input" placeholder="Add your reply..."></textarea>
       <div class="air-popover-actions">
+        <button id="air-delete-btn" style="display: none;">Delete</button>
         <button id="air-cancel-btn">Cancel</button>
         <button id="air-save-btn">Save Reply</button>
       </div>
@@ -41,6 +45,10 @@ class InlineReplyManager {
 
     this.popover.querySelector('#air-save-btn')?.addEventListener('click', () => {
       this.saveCurrentReply();
+    });
+
+    this.popover.querySelector('#air-delete-btn')?.addEventListener('click', () => {
+      this.deleteCurrentAnnotation();
     });
   }
 
@@ -89,6 +97,8 @@ class InlineReplyManager {
     // Check if selection is within an AI response
     if (!this.isWithinAIResponse(selection)) return;
 
+    // Store the range for later highlighting
+    this.currentRange = selection.getRangeAt(0).cloneRange();
     this.showPopover(e.clientX, e.clientY, selectedText);
   }
 
@@ -108,7 +118,7 @@ class InlineReplyManager {
     return !!(chatGptResponse || claudeResponse);
   }
 
-  private showPopover(x: number, y: number, selectedText: string): void {
+  private showPopover(x: number, y: number, selectedText: string, existingReply?: string): void {
     if (!this.popover) return;
 
     this.popover.dataset.selectedText = selectedText;
@@ -117,9 +127,16 @@ class InlineReplyManager {
     this.popover.style.display = 'block';
 
     const input = this.popover.querySelector('#air-reply-input') as HTMLTextAreaElement;
+    const deleteBtn = this.popover.querySelector('#air-delete-btn') as HTMLElement;
+
     if (input) {
-      input.value = '';
+      input.value = existingReply || '';
       input.focus();
+    }
+
+    // Show delete button only when editing
+    if (deleteBtn) {
+      deleteBtn.style.display = this.editingAnnotationId ? 'block' : 'none';
     }
   }
 
@@ -127,6 +144,8 @@ class InlineReplyManager {
     if (this.popover) {
       this.popover.style.display = 'none';
     }
+    this.editingAnnotationId = null;
+    this.currentRange = null;
   }
 
   private saveCurrentReply(): void {
@@ -138,6 +157,20 @@ class InlineReplyManager {
 
     if (!reply) return;
 
+    // Editing existing annotation
+    if (this.editingAnnotationId) {
+      const annotation = this.annotations.find(a => a.id === this.editingAnnotationId);
+      if (annotation) {
+        annotation.reply = reply;
+        annotation.timestamp = Date.now();
+        console.log('AI Inline Reply: Updated annotation', annotation);
+      }
+      this.hidePopover();
+      this.updateToolbar();
+      return;
+    }
+
+    // Creating new annotation with highlight
     const annotation: Annotation = {
       id: crypto.randomUUID(),
       selectedText,
@@ -145,11 +178,84 @@ class InlineReplyManager {
       timestamp: Date.now()
     };
 
+    // Create highlight element
+    if (this.currentRange) {
+      const highlightEl = this.createHighlight(this.currentRange, annotation.id);
+      if (highlightEl) {
+        annotation.highlightEl = highlightEl;
+      }
+    }
+
     this.annotations.push(annotation);
     this.updateToolbar();
     this.hidePopover();
 
+    // Clear selection after saving
+    window.getSelection()?.removeAllRanges();
+
     console.log('AI Inline Reply: Saved annotation', annotation);
+  }
+
+  private createHighlight(range: Range, annotationId: string): HTMLElement | null {
+    try {
+      const highlight = document.createElement('mark');
+      highlight.className = 'air-highlight';
+      highlight.dataset.annotationId = annotationId;
+
+      // Handle simple case where selection is within a single text node
+      if (range.startContainer === range.endContainer &&
+          range.startContainer.nodeType === Node.TEXT_NODE) {
+        range.surroundContents(highlight);
+      } else {
+        // For complex selections spanning multiple nodes, extract and wrap
+        const contents = range.extractContents();
+        highlight.appendChild(contents);
+        range.insertNode(highlight);
+      }
+
+      // Add click handler for editing
+      highlight.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.editAnnotation(annotationId, highlight);
+      });
+
+      return highlight;
+    } catch (err) {
+      console.warn('AI Inline Reply: Could not create highlight', err);
+      return null;
+    }
+  }
+
+  private editAnnotation(annotationId: string, highlightEl: HTMLElement): void {
+    const annotation = this.annotations.find(a => a.id === annotationId);
+    if (!annotation) return;
+
+    this.editingAnnotationId = annotationId;
+
+    const rect = highlightEl.getBoundingClientRect();
+    this.showPopover(rect.left, rect.bottom, annotation.selectedText, annotation.reply);
+  }
+
+  private deleteCurrentAnnotation(): void {
+    if (!this.editingAnnotationId) return;
+
+    const annotation = this.annotations.find(a => a.id === this.editingAnnotationId);
+    if (annotation?.highlightEl) {
+      // Remove highlight but keep the text
+      const parent = annotation.highlightEl.parentNode;
+      if (parent) {
+        while (annotation.highlightEl.firstChild) {
+          parent.insertBefore(annotation.highlightEl.firstChild, annotation.highlightEl);
+        }
+        parent.removeChild(annotation.highlightEl);
+      }
+    }
+
+    this.annotations = this.annotations.filter(a => a.id !== this.editingAnnotationId);
+    this.updateToolbar();
+    this.hidePopover();
+
+    console.log('AI Inline Reply: Deleted annotation', this.editingAnnotationId);
   }
 
   private updateToolbar(): void {
@@ -179,15 +285,69 @@ class InlineReplyManager {
 
     prompt += 'Please address each point above.';
 
-    // Copy to clipboard
-    navigator.clipboard.writeText(prompt).then(() => {
-      alert('Prompt copied to clipboard! Paste it into the chat.');
-    });
+    // Try to insert directly into the chat input
+    const inserted = this.insertIntoTextarea(prompt);
 
-    console.log('AI Inline Reply: Compiled prompt', prompt);
+    if (inserted) {
+      console.log('AI Inline Reply: Inserted prompt into textarea');
+    } else {
+      // Fallback to clipboard
+      navigator.clipboard.writeText(prompt).then(() => {
+        alert('Prompt copied to clipboard! Paste it into the chat.');
+      });
+      console.log('AI Inline Reply: Copied prompt to clipboard');
+    }
+  }
+
+  private insertIntoTextarea(text: string): boolean {
+    // Claude's contenteditable input
+    const claudeInput = document.querySelector('[contenteditable="true"].ProseMirror') as HTMLElement;
+    if (claudeInput) {
+      // ProseMirror needs separate <p> tags for each line
+      claudeInput.innerHTML = '';
+      const lines = text.split('\n');
+      lines.forEach(line => {
+        const p = document.createElement('p');
+        if (line.trim() === '') {
+          // Empty line needs a <br> to render
+          p.innerHTML = '<br>';
+        } else {
+          p.textContent = line;
+        }
+        claudeInput.appendChild(p);
+      });
+      // Trigger input event for React to pick up
+      claudeInput.dispatchEvent(new Event('input', { bubbles: true }));
+      claudeInput.focus();
+      return true;
+    }
+
+    // ChatGPT's textarea
+    const chatGptInput = document.querySelector('#prompt-textarea') as HTMLTextAreaElement;
+    if (chatGptInput) {
+      chatGptInput.value = text;
+      chatGptInput.dispatchEvent(new Event('input', { bubbles: true }));
+      chatGptInput.focus();
+      return true;
+    }
+
+    return false;
   }
 
   private clearAnnotations(): void {
+    // Remove all highlights from DOM
+    this.annotations.forEach(annotation => {
+      if (annotation.highlightEl) {
+        const parent = annotation.highlightEl.parentNode;
+        if (parent) {
+          while (annotation.highlightEl.firstChild) {
+            parent.insertBefore(annotation.highlightEl.firstChild, annotation.highlightEl);
+          }
+          parent.removeChild(annotation.highlightEl);
+        }
+      }
+    });
+
     this.annotations = [];
     this.updateToolbar();
   }

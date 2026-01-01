@@ -121,3 +121,28 @@
 #air-clear-btn:hover {
   background: #555;
 }
+
+#air-delete-btn {
+  background: #dc2626;
+  color: #fff;
+  margin-right: auto;
+}
+
+#air-delete-btn:hover {
+  background: #b91c1c;
+}
+
+/* Highlight styles */
+.air-highlight {
+  background: rgba(59, 130, 246, 0.3);
+  border-bottom: 2px solid #3b82f6;
+  cursor: pointer;
+  padding: 0 2px;
+  margin: 0 -2px;
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+
+.air-highlight:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
