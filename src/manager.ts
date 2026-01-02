@@ -20,30 +20,56 @@ import {
 import { createToolbar, updateToolbar } from "./ui/toolbar";
 import { extractSurroundingContext } from "./utils/context";
 import { insertIntoTextarea, isWithinAIResponse } from "./utils/dom";
+import {
+  applyTheme,
+  detectHostTheme,
+  type Theme,
+  watchThemeChanges,
+} from "./utils/theme";
 import { showToast } from "./utils/toast";
 
 export class InlineReplyManager {
   private currentRange: Range | null = null;
   private editingAnnotationId: string | null = null;
+  private popoverEl: HTMLElement | null = null;
+  private toolbarEl: HTMLElement | null = null;
 
   constructor() {
     this.init();
   }
 
   private init(): void {
-    createPopover({
+    this.popoverEl = createPopover({
       onSave: () => this.saveReply(),
       onDelete: () => this.deleteCurrentAnnotation(),
       onCancel: () => this.cancelEdit(),
     });
 
-    createToolbar({
+    this.toolbarEl = createToolbar({
       onCompile: () => this.compilePrompt(),
       onClear: () => this.clearAll(),
     });
 
+    this.setupTheme();
     this.setupSelectionListener();
     console.log("AI Inline Reply: Initialized");
+  }
+
+  private setupTheme(): void {
+    const setTheme = (theme: Theme) => {
+      if (this.popoverEl) {
+        applyTheme(this.popoverEl, theme);
+      }
+      if (this.toolbarEl) {
+        applyTheme(this.toolbarEl, theme);
+      }
+    };
+
+    // Apply initial theme
+    setTheme(detectHostTheme());
+
+    // Watch for theme changes
+    watchThemeChanges(setTheme);
   }
 
   private setupSelectionListener(): void {

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "AI Inline Reply",
+  "name": "Inline Reply for Claude and ChatGPT",
   "version": "0.1.0",
   "description": "Add inline replies to ChatGPT and Claude responses",
   "icons": {
