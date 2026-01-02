@@ -27,11 +27,18 @@ The extension automatically matches the theme of the site you're on (dark/light 
 
 ## Installation
 
-1. Clone this repo
-2. Run `bun install && bun run build`
+1. Download the latest ZIP from [Releases](../../releases/latest)
+2. Extract the ZIP to a folder
 3. Open Chrome → `chrome://extensions`
 4. Enable "Developer mode"
-5. Click "Load unpacked" → select the `dist` folder
+5. Click "Load unpacked" → select the extracted folder
+
+### Building from source
+
+```bash
+bun install && bun run build
+```
+Then load the `dist` folder as an unpacked extension.
 
 ## Supported Sites
 
