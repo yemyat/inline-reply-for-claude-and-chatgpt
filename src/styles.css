@@ -138,16 +138,32 @@
   color: var(--air-text-primary);
 }
 
-.air-popover-preview {
+.air-popover-preview-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   padding: 10px 12px;
-  font-size: var(--air-font-size-sm);
-  color: var(--air-text-secondary);
   background: var(--air-bg-primary);
   border-bottom: 1px solid var(--air-border-subtle);
+}
+
+.air-popover-preview {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  font-size: var(--air-font-size-sm);
+  color: var(--air-text-secondary);
+  background: transparent;
+  border-bottom: none;
   font-style: italic;
   line-height: 1.4;
-  max-height: 60px;
+  max-height: 40px;
   overflow: hidden;
+}
+
+.air-popover-preview-row .air-btn-ghost {
+  flex-shrink: 0;
+  padding: 4px 6px;
 }
 
 #air-reply-input {

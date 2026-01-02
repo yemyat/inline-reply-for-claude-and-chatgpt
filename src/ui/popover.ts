@@ -1,3 +1,5 @@
+import { showToast } from "../utils/toast";
+
 export interface PopoverCallbacks {
   onSave: () => void;
   onDelete: () => void;
@@ -14,6 +16,9 @@ const ICONS = {
   trash: `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M2.5 4.5H13.5M5.5 4.5V3C5.5 2.44772 5.94772 2 6.5 2H9.5C10.0523 2 10.5 2.44772 10.5 3V4.5M12.5 4.5V13C12.5 13.5523 12.0523 14 11.5 14H4.5C3.94772 14 3.5 13.5523 3.5 13V4.5H12.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`,
+  copy: `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M5.5 5.5V3C5.5 2.44772 5.94772 2 6.5 2H13C13.5523 2 14 2.44772 14 3V9.5C14 10.0523 13.5523 10.5 13 10.5H10.5M3 5.5H9.5C10.0523 5.5 10.5 5.94772 10.5 6.5V13C10.5 13.5523 10.0523 14 9.5 14H3C2.44772 14 2 13.5523 2 13V6.5C2 5.94772 2.44772 5.5 3 5.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`,
 };
 
 export function createPopover(callbacks: PopoverCallbacks): HTMLElement {
@@ -28,7 +33,12 @@ export function createPopover(callbacks: PopoverCallbacks): HTMLElement {
         </svg>
       </button>
     </div>
-    <div class="air-popover-preview" id="air-preview"></div>
+    <div class="air-popover-preview-row">
+      <div class="air-popover-preview" id="air-preview"></div>
+      <button id="air-copy-btn" class="air-btn air-btn-ghost" title="Copy text (${navigator.platform.includes("Mac") ? "⌘" : "Ctrl"}+C)">
+        ${ICONS.copy}
+      </button>
+    </div>
     <textarea id="air-reply-input" placeholder="What should change?"></textarea>
     <div class="air-popover-actions">
       <button id="air-delete-btn" class="air-btn air-btn-danger" style="display: none;">
@@ -58,7 +68,56 @@ export function createPopover(callbacks: PopoverCallbacks): HTMLElement {
     .querySelector("#air-delete-btn")
     ?.addEventListener("click", callbacks.onDelete);
 
+  popoverEl
+    .querySelector("#air-copy-btn")
+    ?.addEventListener("click", copySelectedText);
+
+  // Handle Cmd/Ctrl+C to copy selected text when popover is visible
+  document.addEventListener("keydown", handleCopyShortcut);
+
   return popoverEl;
+}
+
+function copySelectedText(): void {
+  const text = popoverEl?.dataset.selectedText;
+  if (!text) {
+    return;
+  }
+
+  navigator.clipboard
+    .writeText(text)
+    .then(() => {
+      showToast("Copied to clipboard", "success");
+    })
+    .catch((err) => {
+      console.warn("AI Inline Reply: Failed to copy text", err);
+      showToast("Failed to copy", "error");
+    });
+}
+
+function handleCopyShortcut(e: KeyboardEvent): void {
+  if (!popoverEl || popoverEl.style.display !== "block") {
+    return;
+  }
+
+  const isMac = navigator.platform.includes("Mac");
+  const isCopyShortcut = e.key === "c" && (isMac ? e.metaKey : e.ctrlKey);
+
+  if (isCopyShortcut) {
+    // Only allow native copy if user has selected text in the textarea
+    const textarea = popoverEl.querySelector(
+      "#air-reply-input"
+    ) as HTMLTextAreaElement;
+    if (
+      document.activeElement === textarea &&
+      textarea.selectionStart !== textarea.selectionEnd
+    ) {
+      return; // User selected text in textarea, let native copy work
+    }
+
+    e.preventDefault();
+    copySelectedText();
+  }
 }
 
 export function showPopover(

@@ -71,6 +71,23 @@ Please address each point above.
 - `src/utils/context.ts` - New file for context extraction from Range
 - `src/manager.ts` - Capture context before highlight, updated prompt format
 
+### Iteration #7 (2026-01-02)
+**Goal:** Bug fix - preserve copy functionality when popover appears
+
+**Problem:** When selecting text in an AI response, the popover appears but the browser's native text selection is cleared (focus moves to textarea). Users could no longer copy the selected text.
+
+**Solution:**
+- Added copy button next to the preview text in the popover
+- Button uses stored `selectedText` from popover's dataset
+- Added keyboard shortcut (Cmd+C on Mac, Ctrl+C on Windows)
+- Keyboard shortcut copies highlighted text unless user has selected text in the textarea
+- Toast notification confirms successful copy ("Copied to clipboard")
+
+**Files changed:**
+- `src/ui/popover.ts` - Added copy icon, copy button, click handler, and keyboard shortcut listener
+- `src/styles.css` - Added `.air-popover-preview-row` flex layout for preview + copy button
+- `package.json` - Bumped version to 0.1.1
+
 ### Iteration #5 (2026-01-01)
 **Goal:** Visual polish with Linear-inspired design and better UX
 
@@ -281,4 +298,6 @@ input.dispatchEvent(new Event('input', { bubbles: true }));
 - [x] Proper newline formatting in Claude's ProseMirror input
 - [x] Toast notifications via notyf (replaces alert())
 - [x] Surrounding context in compiled prompts (6 words before/after)
+- [x] Copy button in popover to copy selected text
+- [x] Keyboard shortcut (Cmd/Ctrl+C) for copying selected text
 

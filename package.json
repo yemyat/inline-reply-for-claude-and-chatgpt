@@ -1,6 +1,6 @@
 {
   "name": "ai-inline-reply",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Inline replies for Claude and ChatGPT",
   "scripts": {
     "build": "bun build src/content.ts --outdir dist --format iife --target browser && bun build src/background.ts --outdir dist --format iife --target browser && cp src/manifest.json dist/ && cp src/styles.css dist/ && cp node_modules/notyf/notyf.min.css dist/ && cp -r src/icons dist/",
